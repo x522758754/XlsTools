@@ -1,0 +1,11 @@
+#ignore the fileName end with ~
+*~
+
+#ignore the fileName begin with ~
+~*
+
+#ignore the fileSuffix end with .pyc
+*.pyc
+
+#ignore dir: dir/ 
+

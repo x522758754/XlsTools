@@ -19,6 +19,15 @@ _XlsDir = 'data'  # Xls 目录
 _OutDir = 'output'  # txt 输出目录
 _bError = False #是否出错
 
+_KeyExplain = 0 # sheet第一行：每一个的字段注释说明
+_TypeRow = 1 # sheet第二行：每一个的字段的类型
+_ClientKeysRow = 2 # sheet第三行: 客户端字段名（备注：服务器表此行可以为空))
+_ServerKeysRow = 3 # sheet第四行：服务器字段名（备注：客户端表此行可以为空))
+_DataRow = 4 # sheet第五行：数据开始行
+_EnumFalg = '*' #枚举相关的标志
+
+_TxtSplit = '\t'
+
 
 # 解析客户端表
 # 将Xls的一个sheet =》 txt
@@ -28,15 +37,22 @@ def ClientSheetToTxt(fileName, sheet):
 	txtName = FormatTxtName(fileName + sheet.name)
 
 	dictType = CheckSheet(sheet)
-	if(1 != dictType):
+	if(-1 == dictType):
 		print(u'表: %s 为无效表，请检查表头' % (txtName))
+		_bError = True
 		return
 
-	print(u'******解析表%s*******' % (txtName,dictType))
-	cleintIds = GetClientKeyIndexs(sheet)
-	lastRowIndex = GetLastRowIndex(sheet)
-	
+	print(u'******解析表:%s*******' % (txtName))
 
+	colIds = GetClientKeyIndexs(sheet)
+	typeIds = GetTypeIds(sheet)
+	lastRowIndex = GetLastRowIndex(sheet)
+	for colId in colIds:
+		rowData = []
+		type = sheet.cell_value(_TypeRow, colId)
+		for rowId in range(_DataRow, lastRowIndex):
+			value = sheet.cell_value(rowId, colId)
+			ParseData(type, value)
 
 
 # 规范数据表的文件名
@@ -51,6 +67,11 @@ def FormatTxtName(name):
 				txtName = txtName + '_' + arrayString[i]
 
 	return txtName
+
+
+#解析xls中的CellValue的值
+def ParseData(originData, type):
+	pass
 
 
 
@@ -81,7 +102,7 @@ if('__main__' == __name__):
 		for sheet in sheets:
 			if(0 == sheet.name.find('_')):
 				fileName = f[0:f.find('.')]
-				HandleXlsToTxt(fileName, sheet)
+				ClientSheetToTxt(fileName, sheet)
 
 	print(u'---------------程序结束-----------')
 

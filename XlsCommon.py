@@ -35,28 +35,19 @@ def GetAllXls(path):
 def CheckSheet(sheet):
 	if(3 > sheet.nrows or 2 > sheet.ncols):
 		return -1
-	
+
 	dictType = -1
 	clientKeyValues = sheet.row_values(_ClientKeysRow)
-	for i in range(len(clientKeyValues)):
-		if(0 == len(clientKeyValues[i])):
-			if(0 == i):
-				break
-		else:
-			dictType = 0
-			break
+	if(0 != len(clientKeyValues) and 0 != len(clientKeyValues[0])):
+		dictType = 0
+
 
 	serverKeyValues = sheet.row_values(_ServerKeysRow)
-	for i in range(len(serverKeyValues)):
-		if(0 == len(serverKeyValues[i])):
-			if(0 == i):
-				break
+	if(0 != len(serverKeyValues) and 0 != len(serverKeyValues[0])):
+		if(0 == dictType):
+			dictType = 2
 		else:
-			if(0 == dictType):
-				dictType = 2
-			else:
-				dictType = 1
-			break
+			dictType = 1
 
 	return dictType
 
@@ -68,7 +59,7 @@ def GetTypeIds(sheet):
 	types = sheet.row_values(_TypeRow)
 	for i in range(len(types)):
 		if(0 != len(types[i])):
-			if(type[i].startswith('*')):
+			if(types[i].startswith('*')):
 				continue
 			typeIds.append(i)
 		else:
@@ -81,26 +72,21 @@ def GetTypeIds(sheet):
 def GetClientKeyIndexs(sheet):
 	clientIds = []
 
+	typeIds = GetTypeIds(sheet)
 	keys = sheet.row_values(_ClientKeysRow)
 	for i in range(len(keys)):
 		if(0 != len(keys[i])):
-			if(type[i]):
-				continue
-			clientIds.append(i)
+			#先判断此索引是否有对应的类型
+			for typeId in typeIds:
+				if(i == typeId):
+					clientIds.append(i)
+					break
 		else:
 			if(i == 0):
 				break
 			else:
 				continue
 
-	typeIds = GetTypeIds(sheet)
-	for id in clientIds:
-		isContain = False
-		for typeId in typeIds:
-			if(id == typeId):
-				isContain = True
-		if(not isContain):
-			clientIds.remove(id)
 
 	return clientIds
 
@@ -108,26 +94,18 @@ def GetClientKeyIndexs(sheet):
 def GetServerKeyIndexs(sheet):
 	serverIds = []
 
+	typeIds = GetTypeIds(sheet)
 	keys = sheet.row_values(_ServerKeysRow)
 	for i in range(len(keys)):
 		if(0 != len(keys[i])):
-			if(type[i]):
-				continue
-			serverIds.append(i)
+			#先判断此索引是否有对应的类型
+			for typeId in typeIds:
+				if(i == typeId):
+					serverIds.append(i)
+					break
 		else:
-			if(i == 0):
+			if(i == 0): #索引不许为空
 				break
-			else:
-				continue
-
-	typeIds = GetTypeIds(sheet)
-	for id in clientIds:
-		isContain = False
-		for typeId in typeIds:
-			if(id == typeId):
-				isContain = True
-		if(not isContain):
-			serverIds.remove(id)
 
 	return serverIds
 
@@ -148,10 +126,9 @@ def GetLastRowIndex(sheet):
 	for i in range(4, sheet.nrows):
 		row_values = sheet.row_values(i)
 		for value in row_values:
-			if(0 == len(value)):
+			if(0 == len(str(value))):
 				break
 		lastRowIndex = i
 
 	return lastRowIndex
-
 

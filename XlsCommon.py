@@ -4,6 +4,7 @@
 import os
 import sys
 import xlrd
+import codecs
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -15,6 +16,8 @@ _ClientKeysRow = 2 # sheet第三行: 客户端字段名（备注：服务器表�
 _ServerKeysRow = 3 # sheet第四行：服务器字段名（备注：客户端表此行可以为空))
 _DataRow = 4 # sheet第五行：数据开始行
 _EnumFalg = '*' #枚举相关的标志
+
+_TxtSplit = '\t'
 
 
 # 获得目录下文件
@@ -132,3 +135,16 @@ def GetLastRowIndex(sheet):
 
 	return lastRowIndex
 
+#打开文件
+def OpenFile(fileName, mode = 'w', code = 'utf-8'):
+	f = codecs.open(fileName, mode, code)
+	return f
+#写数据到一个已打开文件中
+def WriteLineData(fileOpen, data):
+	strLine = ''
+	for i in range(len(data)):
+		strLine += str(data[i])
+		if(i < len(data) - 1):
+			strLine += _TxtSplit
+
+	fileOpen.write(strLine + '\n')

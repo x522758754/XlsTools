@@ -5,7 +5,7 @@
 import sys
 import os
 import xlrd
-
+import codecs
 from XlsCommon import *
 
 # sys init之后
@@ -27,6 +27,7 @@ _DataRow = 4 # sheet第五行：数据开始行
 _EnumFalg = '*' #枚举相关的标志
 
 _TxtSplit = '\t'
+_ArraySplit = '&&'
 
 
 # 解析客户端表
@@ -42,18 +43,23 @@ def ClientSheetToTxt(fileName, sheet):
 		_bError = True
 		return
 
-	print(u'******解析表:%s*******' % (txtName))
+	print(u'****** 解析表: %s *******' % (txtName))
+
+	#写文件
+	fileOpen = OpenFile(_OutDir+'/'+fileName+'.txt')
 
 	colIds = GetClientKeyIndexs(sheet)
 	typeIds = GetTypeIds(sheet)
 	lastRowIndex = GetLastRowIndex(sheet)
-	for colId in colIds:
+	for rowId in range(_DataRow, lastRowIndex):
 		rowData = []
-		type = sheet.cell_value(_TypeRow, colId)
-		for rowId in range(_DataRow, lastRowIndex):
-			value = sheet.cell_value(rowId, colId)
-			ParseData(type, value)
+		for colId in colIds:
+			type = sheet.cell_value(_TypeRow, colId)
+			value = str(sheet.cell_value(rowId, colId))#转换成string
+			rowData.append(ParseData(type, value))
+		WriteLineData(fileOpen, rowData)
 
+	fileOpen.close()
 
 # 规范数据表的文件名
 def FormatTxtName(name):
@@ -70,8 +76,72 @@ def FormatTxtName(name):
 
 
 #解析xls中的CellValue的值
-def ParseData(originData, type):
-	pass
+def ParseData(type, value):
+	if(0 == cmp('int', type)):
+		return ParseInt(type, value)
+	elif(0 == cmp('float', type)):
+		return ParseFloat(type, value)
+	elif(0 == cmp('string', type)):
+		return ParseString(type, value)
+	elif(0 == cmp('array_int', type)):
+		#遍历检查一下数组的值是否有问题
+		arrayValue = value.split(_ArraySplit)
+		for i in range(len(arrayValue)):
+			strValue = arrayValue[i]
+			ParseInt('int', strValue)
+
+		return value
+	elif(0 == cmp('array_float', type)):
+		arrayValue = value.split(_ArraySplit)
+		for i in range(len(arrayValue)):
+			strValue = arrayValue[i]
+			ParseInt('float', strValue)
+	elif(0 == cmp('array_string', type)):
+		return value
+	else:
+		_bError = True
+		print(u'类型错误:未知类型%s' %(type))
+
+#解析int数据
+def ParseInt(type, value):
+	if(0 == len(value)):
+		return 0
+	else:
+		strValue = value
+		if(-1 != value.find('.')):
+			strValue = value[0:value.find('.')]
+		try:
+			iValue = int(strValue)
+		except Exception as e:
+			_bError = True
+			print(u'类型转换:%s -> %s 出错' %(value, type))
+			iValue = 0;
+		finally:
+			return iValue
+
+#解析float数据
+def ParseFloat(type, value):
+	if(0 == len(value)):
+		return 0.0
+	else:
+		strValue = value
+		if(-1 != value.find('.')):
+			strValue = value[0:value.find('.')]
+		try:
+			fValue = float(strValue)
+		except Exception as e:
+			_bError = True
+			print(u'类型转换:%s -> %s 出错' %(value, type))
+			fValue = 0.0
+		finally:
+			return fValue
+
+#解析string数据
+def ParseString(type, value):
+	if(0 == len(value)):
+		return ''
+	else:
+		return value
 
 
 

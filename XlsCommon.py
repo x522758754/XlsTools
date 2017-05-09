@@ -5,6 +5,7 @@ import os
 import sys
 import xlrd
 import codecs
+import time
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -15,7 +16,7 @@ _TypeRow = 1 # sheet第二行：每一个的字段的类型
 _ClientKeysRow = 2 # sheet第三行: 客户端字段名（备注：服务器表此行可以为空))
 _ServerKeysRow = 3 # sheet第四行：服务器字段名（备注：客户端表此行可以为空))
 _DataRow = 4 # sheet第五行：数据开始行
-_EnumFalg = '*' #枚举相关的标志
+_EnumFalg = '*' #枚举相关的标志，规则：*enum在前，*enumDesc 列数+1,且一个表一个枚举
 
 _TxtSplit = '\t'
 
@@ -43,7 +44,6 @@ def CheckSheet(sheet):
 	clientKeyValues = sheet.row_values(_ClientKeysRow)
 	if(0 != len(clientKeyValues) and 0 != len(clientKeyValues[0])):
 		dictType = 0
-
 
 	serverKeyValues = sheet.row_values(_ServerKeysRow)
 	if(0 != len(serverKeyValues) and 0 != len(serverKeyValues[0])):
@@ -118,7 +118,7 @@ def GetClientEnumIndexs(sheet):
 
 	keys = sheet.row_values(_ClientKeysRow)
 	for i in range(len(keys)):
-		if(keys[i].startswith('*')):
+		if(0 == cmp(keys[i],'*enum')):
 			enumIds.append(i)
 
 	return enumIds
@@ -136,9 +136,19 @@ def GetLastRowIndex(sheet):
 	return lastRowIndex
 
 #打开文件
-def OpenFile(fileName, mode = 'w', code = 'utf-8'):
-	f = codecs.open(fileName, mode, code)
+def OpenFile(filePath, mode = 'w', code = 'utf-8'):
+	
+	if(-1 != filePath.rfind('/')):
+		dirPath = filePath[0:filePath.rfind('/')]
+		if(os.path.exists(dirPath) == False):
+			os.mkdir(dirPath)
+	if(-1 != filePath.rfind('\\')):
+		dirPath = filePath[0:filePath.rfind('\\')]
+		if(os.path.exists(dirPath) == False):
+			os.mkdir(dirPath)
+	f = codecs.open(filePath, mode, code)
 	return f
+
 #写数据到一个已打开文件中
 def WriteLineData(fileOpen, data):
 	strLine = ''
@@ -148,3 +158,7 @@ def WriteLineData(fileOpen, data):
 			strLine += _TxtSplit
 
 	fileOpen.write(strLine + '\n')
+
+#获得系统时间
+def GetSysData():
+	return time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))

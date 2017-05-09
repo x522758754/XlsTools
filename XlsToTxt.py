@@ -10,7 +10,7 @@ from XlsCommon import *
 
 # sys init之后
 reload(sys)
-# coding:utf-8 定义源代码的编码，如果没定义，此远吗中是不可以包含中文字符的
+# coding:utf-8 定义源代码的编码，如果没定义，此源码中是不可以包含中文字符的
 # 设置默认的string的编码格式
 sys.setdefaultencoding('utf-8')
 
@@ -42,14 +42,18 @@ def ClientSheetToTxt(fileName, sheet):
 		print(u'表: %s 为无效表，请检查表头' % (txtName))
 		_bError = True
 		return
+	elif(1 == dictType):
+		#print(u'表：%s 后端表' %(txtName))
+		return
 
 	print(u'****** 解析表: %s *******' % (txtName))
 
 	#写文件
-	fileOpen = OpenFile(_OutDir+'/'+fileName+'.txt')
+	txtName = fileName + '.txt'
+	dirPath = _OutDir + '/client/'
+	fileOpen = OpenFile(dirPath+txtName)
 
 	colIds = GetClientKeyIndexs(sheet)
-	typeIds = GetTypeIds(sheet)
 	lastRowIndex = GetLastRowIndex(sheet)
 	for rowId in range(_DataRow, lastRowIndex):
 		rowData = []

@@ -182,3 +182,5 @@ if('__main__' == __name__):
 
 	if(_bError):
 		print(u'程序出错，请检查出错的地方')
+
+	os.system("pause")

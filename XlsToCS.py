@@ -271,3 +271,4 @@ if('__main__' == __name__):
 				ClientSheetToEnum(fileName, sheet)
 
 	print(u'---------------XlsToCS程序结束-----------')
+	os.system("pause")

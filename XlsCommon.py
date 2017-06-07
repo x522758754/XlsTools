@@ -6,6 +6,7 @@ import sys
 import xlrd
 import codecs
 import time
+import re
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -29,9 +30,8 @@ def GetAllXls(path):
 	fileList = []
 	for root, dirs, files in os.walk(path):
 		for f in files:
-			if(-1 == f.find('~') and (f.endswith('.xlsx') or f.endswith('.xls') )):
+			if(-1 == f.find('~') and (f.endswith('.xlsx') or f.endswith('.xls') ) ):
 				fileList.append(f)
-				
 
 	return fileList
 
@@ -162,3 +162,11 @@ def WriteLineData(fileOpen, data):
 #获得系统时间
 def GetSysData():
 	return time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+
+#是否包含中文
+def IsContainChinese(content):
+	zh_pattern = re.compile(u'[\u4e00-\u9fa5]+')
+
+	match = zh_pattern.search(content)
+
+	return match

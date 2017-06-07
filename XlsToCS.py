@@ -18,7 +18,7 @@ _ServerKeysRow = 3 # sheet第四行：服务器字段名（备注：客户端表
 _DataRow = 4 # sheet第五行：数据开始行
 _EnumFalg = '*' #枚举相关的标志
 
-# 
+# 客户端将sheet转cs代码
 def ClientSheetToCS(fileName, sheet):
 	name = FormatName(fileName)
 
@@ -61,7 +61,7 @@ def ClientSheetToCS(fileName, sheet):
 	fileOpen.write(strCSFile)
 	fileOpen.close()
 
-#
+# 客户端将sheet转enum代码
 def ClientSheetToEnum(fileName, sheet):
 	name = FormatName(fileName)
 	dictType = CheckSheet(sheet)
@@ -90,6 +90,38 @@ def ClientSheetToEnum(fileName, sheet):
 	fileOpen.write(strEnum)
 	fileOpen.close()
 
+# 客户端将sheets转DictManager
+def ClientSheetsToDictManager(fileNames):
+	
+	strNames = '' #数组中文件名
+	strKeys = '' # 表的DictLoader实例
+	strLoadItems = '' #表Load function项
+	StrUnloadItems = ''#表Unload function项
+
+	length = len(fileNames)
+	for i in range(length):
+		fileName = fileNames[i]
+		#数组中文件名
+		strName = '\"' + fileName + '\"'
+		strNames += strName
+		if(i != length-1):
+			strNames += ',\n											'
+		else:
+			pass
+		name = FormatName(fileName)
+		strKeys += CreateDMItems(name)
+		strLoadItems += CreateDMLoadItems(name)
+		StrUnloadItems += CreateDMUnloadItems(name)
+
+	strDM = CreateDictManager(strNames, strKeys, strLoadItems, StrUnloadItems)
+
+	fileName = 'DictManager.cs'
+	dirPath = _OutDir + '/AutoDict/'
+	fileOpen = OpenFile(dirPath+fileName)
+	fileOpen.write(strDM)
+	fileOpen.close()
+
+
 # 格式化CS文件名
 def FormatName(fileName):
 	#name = fileName[0].upper() + fileName[1:] + 'DictLoader'
@@ -99,12 +131,12 @@ def FormatName(fileName):
 		if(len(arrayName[i]) > 0):
 			str = arrayName[i][0].upper() + arrayName[i][1:]
 			name += str
+
 	return name
 
 # 创建cs文件
 def CreateCSFile(date, strModel, strLoader):
-	strMain = '''
-/**************************************************
+	strMain = '''/**************************************************
 * Author：Auto Generate
 * Date: %s
 * Desc:
@@ -209,8 +241,7 @@ def GetTypeSwitchFuncName(type):
 
 # 创建枚举文件
 def CreateEnumFile(date, enumName, enumItems):
-	strMain = '''
-/**************************************************
+	strMain = '''/**************************************************
 * Author：Auto Generate
 * Date: %s
 * Desc:
@@ -240,6 +271,74 @@ def CreateEnumItem(enumDesc, enumKey):
 
 	return str
 
+# 创建管理类文件
+def CreateDictManager(names, loaders, loadItems, unloadItems):
+	strMain = '''/************************************************* 
+Copyright: 
+Author: auto-generate
+Date: %s
+Description:数据表管理类 part2
+**************************************************/
+
+namespace DataLoad
+{
+	public partial class DictManager
+	{
+		#region 表名
+		public string[] _ArrayDictNames = {%s};
+		#endregion
+
+		#region DictLoaders
+
+		%s
+		#endregion
+
+		/// <summary>
+		/// 加载数据
+		/// </summary>
+		private void Loads()
+		{
+			%s
+		}
+
+		/// <summary>
+		/// 卸载数据
+		/// </summary>
+		private void Unloads()
+		{
+			%s
+		}
+	}
+}
+'''
+	date = GetSysData()
+	str = strMain %(date, names, loaders, loadItems, unloadItems)
+
+	return str
+
+# 创建DictManager 变量
+def CreateDMItems(name):
+	strMain = '''public %s _%s = new %s();
+		'''
+	csName = name + 'DictLoader'
+	str = strMain %(csName, name, csName)
+
+	return str
+
+#创建DictManager loads函数项
+def CreateDMLoadItems(name):
+	strMain = '''_%s.LoadDictFile(_DirPath);
+			'''
+	str = strMain %(name)
+
+	return str
+
+def CreateDMUnloadItems(name):
+	strMain = '''_%s.Release();
+			'''
+	str = strMain %(name)
+
+	return str
 
 # 程序执行开始
 if('__main__' == __name__):
@@ -261,6 +360,7 @@ if('__main__' == __name__):
 	print(u'输出目录: ' + _OutDir)
 
 	fileList = GetAllXls(_XlsDir)
+	names = []
 	for f in fileList:
 		data = xlrd.open_workbook(_XlsDir + os.path.sep + f)
 		sheets = data.sheets()
@@ -269,6 +369,8 @@ if('__main__' == __name__):
 				fileName = f[0:f.find('.')]
 				ClientSheetToCS(fileName, sheet)
 				ClientSheetToEnum(fileName, sheet)
+				names.append(fileName)
 
+	ClientSheetsToDictManager(names)
 	print(u'---------------XlsToCS程序结束-----------')
 	os.system("pause")
